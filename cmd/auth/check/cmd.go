@@ -30,7 +30,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func checkCLICredentials() bool {
+func verifyCLICredentials() bool {
 	allValid := true
 
 	// Check environment variables first (same pattern as EnsureAuthenticated)
@@ -176,7 +176,7 @@ func verifyDotenvToken(dotenvEndpoint, dotenvToken string) bool {
 	return true
 }
 
-func checkDotenvCredentials(repoRoot string) bool {
+func verifyDotenvCredentials(repoRoot string) bool {
 	dotenvPath := filepath.Join(repoRoot, ".env")
 
 	_, statErr := os.Stat(dotenvPath)
@@ -219,18 +219,18 @@ func Run(_ *cobra.Command, _ []string) {
 	// If not, check the CLI credentials only
 	repoRoot, err := repo.FindRepoRoot()
 	if err != nil {
-		if checkCLICredentials() {
+		if verifyCLICredentials() {
 			return
 		}
 
 		os.Exit(1)
 	}
 
-	if checkDotenvCredentials(repoRoot) {
+	if verifyDotenvCredentials(repoRoot) {
 		return
 	}
 
-	if checkCLICredentials() {
+	if verifyCLICredentials() {
 		return
 	}
 
