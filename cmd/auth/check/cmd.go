@@ -214,27 +214,36 @@ func checkDotenvCredentials(repoRoot string) bool {
 	return true
 }
 
-func Run(_ *cobra.Command, _ []string) {
+// RunE performs the authentication check and returns an error if authentication fails.
+// This is the testable entrypoint for the command logic.
+func RunE(_ *cobra.Command, _ []string) error {
 	// Check .env credentials if in a repo
 	// If not, check the CLI credentials only
 	repoRoot, err := repo.FindRepoRoot()
 	if err != nil {
 		if checkCLICredentials() {
-			return
+			return nil
 		}
 
-		os.Exit(1)
+		return errors.New("authentication check failed")
 	}
 
 	if checkDotenvCredentials(repoRoot) {
-		return
+		return nil
 	}
 
 	if checkCLICredentials() {
-		return
+		return nil
 	}
 
-	os.Exit(1)
+	return errors.New("authentication check failed")
+}
+
+// Run wraps RunE and calls os.Exit(1) on error for use in the CLI command.
+func Run(cmd *cobra.Command, args []string) {
+	if err := RunE(cmd, args); err != nil {
+		os.Exit(1)
+	}
 }
 
 func Cmd() *cobra.Command {

@@ -151,6 +151,38 @@ func init() {
 }
 ```
 
+#### Testable command pattern
+
+For commands that need to call `os.Exit()` but still be testable, use this pattern:
+
+```go
+// RunE is the testable entrypoint that returns an error
+func RunE(cmd *cobra.Command, args []string) error {
+    // Command implementation
+    if someCondition {
+        return errors.New("operation failed")
+    }
+    return nil
+}
+
+// Run wraps RunE and calls os.Exit(1) on error
+func Run(cmd *cobra.Command, args []string) {
+    if err := RunE(cmd, args); err != nil {
+        os.Exit(1)
+    }
+}
+
+func Cmd() *cobra.Command {
+    return &cobra.Command{
+        Use:   "example",
+        Short: "Example command",
+        Run:   Run,  // Use Run in production
+    }
+}
+```
+
+Tests call `RunE` directly to verify error handling without process termination.
+
 ### TUI models
 
 TUI components use the Bubble Tea framework and are executed using the `tui.Run` wrapper,
