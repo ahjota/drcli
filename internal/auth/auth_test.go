@@ -115,7 +115,7 @@ func TestEnsureAuthenticated_ExpiredCredentials(t *testing.T) {
 	defer cleanup()
 
 	viper.Set(config.DataRobotAPIKey, "expired-token")
-	os.Unsetenv("DATAROBOT_API_TOKEN")
+	t.Setenv("DATAROBOT_API_TOKEN", "")
 
 	apiKey, _ := config.GetAPIKey()
 	assert.Empty(t, apiKey, "Expected GetAPIKey to return empty string for expired token")
@@ -134,7 +134,7 @@ func TestEnsureAuthenticated_ValidCredentials(t *testing.T) {
 	defer cleanup()
 
 	viper.Set(config.DataRobotAPIKey, "valid-token")
-	os.Unsetenv("DATAROBOT_API_TOKEN")
+	t.Setenv("DATAROBOT_API_TOKEN", "")
 
 	apiKey, _ := config.GetAPIKey()
 	assert.Equal(t, "valid-token", apiKey, "Expected GetAPIKey to return valid token")
@@ -147,8 +147,8 @@ func TestEnsureAuthenticated_ValidEnvironmentToken(t *testing.T) {
 	server, cleanup := setupTestEnvironment(t)
 	defer cleanup()
 
-	os.Setenv("DATAROBOT_ENDPOINT", server.URL+"/api/v2")
-	os.Setenv("DATAROBOT_API_TOKEN", "valid-token")
+	t.Setenv("DATAROBOT_ENDPOINT", server.URL+"/api/v2")
+	t.Setenv("DATAROBOT_API_TOKEN", "valid-token")
 
 	apiKey, _ := config.GetAPIKey()
 	assert.Empty(t, apiKey, "Expected GetAPIKey before EnsureAuthenticated to return empty string")
@@ -169,19 +169,12 @@ func TestEnsureAuthenticated_SkipAuth(t *testing.T) {
 
 	// Don't set any credentials
 	viper.Set(config.DataRobotAPIKey, "")
-
-	existingToken := os.Getenv("DATAROBOT_API_TOKEN")
-
-	os.Unsetenv("DATAROBOT_API_TOKEN")
-
-	defer os.Setenv("DATAROBOT_API_TOKEN", existingToken)
+	t.Setenv("DATAROBOT_API_TOKEN", "")
 
 	result := EnsureAuthenticated(context.Background())
 	assert.True(t, result, "Expected EnsureAuthenticated to return true when skip_auth is enabled via config")
 
-	os.Setenv("DATAROBOT_CLI_SKIP_AUTH", "true")
-
-	defer os.Unsetenv("DATAROBOT_CLI_SKIP_AUTH")
+	t.Setenv("DATAROBOT_CLI_SKIP_AUTH", "true")
 
 	result = EnsureAuthenticated(context.Background())
 	assert.True(t, result, "Expected EnsureAuthenticated to return true when skip_auth is enabled via environment variable")
